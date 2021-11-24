@@ -93,7 +93,10 @@ streamlit run main.py
 
 ![image](https://user-images.githubusercontent.com/17545900/116814244-2c155780-ab58-11eb-8b80-6d2b73bd27d8.png)
 
+
+
 # setup for nginx virtual host
+## not done yet
     edit nginx vhost, and add this code to pointed 'cryptoanalysis' url path to this app, example :
     ```
     location /cryptoanalysis/ {
