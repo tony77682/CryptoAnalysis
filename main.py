@@ -87,7 +87,7 @@ class Crypto_analysis:
                     #return Crypto_analysis.analyse_mma
                 except:
                     pass
-        st.success("Done making the MMA. analysis!")
+        st.success('Done making the MMA. analysis!')
         #Crypto_analysis.info_filtered_mma = {x: y for x, y in Crypto_analysis.analyse_mma.items() if (y is not None and y != 0)}
     
     async def get_analysis_osc():
