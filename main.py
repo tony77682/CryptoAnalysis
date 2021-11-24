@@ -1,8 +1,8 @@
-from asyncio.streams import StreamWriter
+from asyncio.streams import StreamWriter, start_server
 from logging import info
 import streamlit as st
 import asyncio
-from datetime import datetime
+from datetime import date, datetime
 import json
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from requests import Session
@@ -29,10 +29,11 @@ class Crypto_analysis:
     
 
     async def get_marketCap():
+        start=datetime.now()
         url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
         parameters = {
         'start':'1',
-        'limit':'200', # 100 i think is the best depending on the time analysis
+        'limit':'200', # 100 i think is the best depending on the time analysis (execution time is aroud: 53 seconds) each 50 takes around 17 second
         'convert':'USDT'#bridge coin (btcusdt) u can change it to BUSD or any bridge
         }
         headers = {
@@ -60,6 +61,7 @@ class Crypto_analysis:
                             vol_ch24h=i["quote"]["USDT"]["volume_change_24h"]
                             crypto_data.append(ticker)
                             changes[ticker] = [proc_1h, proc_24h, proc_7d, vol_ch24h]
+            st.write("Execution time: ",datetime.now()-start)
             st.success("Done Collecting and sorting Crypto!")    
             #filter the coins with the changes in 1 hour, one day, one week 
             
@@ -70,8 +72,9 @@ class Crypto_analysis:
             return e
         
 
-    
+    # add progress bar to th analysis
     async def get_analysis_mma():
+        start=datetime.now()
         with st.spinner("Make MMA analysis"):
         
             for ticker in Crypto_analysis.filtered_coins:
@@ -87,11 +90,14 @@ class Crypto_analysis:
                     #return Crypto_analysis.analyse_mma
                 except:
                     pass
+        
+        st.write("Execution time",datetime.now()-start)
         st.success('Done making the MMA. analysis!')
         #Crypto_analysis.info_filtered_mma = {x: y for x, y in Crypto_analysis.analyse_mma.items() if (y is not None and y != 0)}
     
+    # add a progress bar for the analysis
     async def get_analysis_osc():
-        
+        start=datetime.now()
         with st.spinner('Making OSC. analysis...'):
             for ticker in Crypto_analysis.analyse_mma.keys():
                 try:
@@ -117,9 +123,10 @@ class Crypto_analysis:
                     #return Crypto_analysis.recommanded_crypto
                 except: #(ConnectionError, Timeout, TooManyRedirects) as e:
                     pass
+        st.write("Execution time",datetime.now()-start)
         st.success('Done making the OSC. analysis!')
-    async def draw_sidebar():
 
+    async def draw_sidebar():
         st.sidebar.header("Crypto-Analysis")
         Crypto_analysis.interval = st.sidebar.radio("Choose interval",(
             "1 minute", 
@@ -169,12 +176,7 @@ async def main():
     
     
 if __name__ == '__main__':
-
-    #asyncio.run(main())
-    start=datetime.now()
     asyncio.run(main())
-    st.write("runtime= ", datetime.now()-start)
-
     
     
     
