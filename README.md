@@ -91,7 +91,7 @@ streamlit run main.py
         3- run the program
                 streamlit run main.py
 
-![image](https://user-images.githubusercontent.com/17545900/116814244-2c155780-ab58-11eb-8b80-6d2b73bd27d8.png)
+![image](https://user-images.githubusercontent.com/17545900/143223263-156bed3e-de66-41f7-9b0e-90d45b5e4ae3.png)
 
 
 
