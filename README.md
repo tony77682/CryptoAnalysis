@@ -1,2 +1,119 @@
 # asyc_crypto_analysis
-asynchronise crypto analysis 
+Execution time for for 200 crypto currencies that they had a positive changes in the last 1h, 24h, 7days and volume change.
+then program make a moving money avg. analysis for the those cryptos and generate four lists(buy, sell, strong_buy and strong_sell)
+then we make and OSC. analysis on the crypto list of the MMA analysis to generate a new list called Recommanded to buy in this interval of time 
+Analysis takes around: 53 seconds) each 50 takes around 17 second
+
+## Discription:
+simple streamlit(screener) app to make MMA and OSC analysis for cryptocurrencies, and gives resaults for which coins are best to buy or sell depending on the interval you using.
+
+#### More about tradingview : https://pypi.org/project/tradingview-ta/
+
+**Stage 0:**
+    get a list of lastest active coins in the market (coinmarketcap)
+
+**Stage 1:**
+    (tradingView analysis)MA analysis that they have been > 0 the last 1 hour , 24 hours and 7 days and output:
+- strong_buy
+- buy
+- sell
+- strong_sell
+
+**Stage 2:**
+    OSC analysis on the "strong_buy list" that we got from the analysis in earlier stage and generate: 
+- recommanded_list
+        
+
+Stage 1 and 2 can be done in different time intervals:
+- 1 minute
+- 5 minutes
+- 15 minutes
+- 1 hour
+- 4 hours
+- 1 day
+- 1 week
+- 1 month
+
+**Stage 3:**
+
+## Setup:
+1.install requierments:
+```
+pip install -r requirements.txt
+```
+
+2. Coinmarketcap API-key
+
+![image](https://user-images.githubusercontent.com/17545900/116851923-a6df8080-abf3-11eb-9ad2-66b6aa6e3667.png)
+
+Docs: https://coinmarketcap.com/api/documentation/v1/
+
+paste your key in main.py -> :
+
+```
+def get_marketCap(self):
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
+    parameters = {
+    'start':'1',
+    'limit':'100', # how many coins to analysis : first 100
+    'convert':'USDT' #change the bridge to see other values like BUSD
+    }
+    headers = {
+    'Accepts': 'application/json',
+    'X-CMC_PRO_API_KEY': 'add your key in here',   
+    }
+```
+
+3. run the program
+```
+streamlit run main.py
+```
+=======
+        Stage 1,2 can be done in different time intervals:
+            1 minute
+            5 minutes
+            15 minutes
+            1 hour
+            4 hours
+            1 day
+            1 week
+            1 month
+        Stage 3: save the generated Coin_list
+
+# setup:
+        1- install requierments:
+                pip install -r requirements.txt
+
+        2- coinmarketcap API-key
+![image](https://user-images.githubusercontent.com/17545900/116851923-a6df8080-abf3-11eb-9ad2-66b6aa6e3667.png)
+
+                docs: https://coinmarketcap.com/api/documentation/v1/
+
+                set your key as an environment variable with key X-CMC_PRO_API_KEY
+
+        3- run the program
+                streamlit run main.py
+
+![image](https://user-images.githubusercontent.com/17545900/143223263-156bed3e-de66-41f7-9b0e-90d45b5e4ae3.png)
+
+
+
+# setup for nginx virtual host
+## not done yet
+    edit nginx vhost, and add this code to pointed 'cryptoanalysis' url path to this app, example :
+    ```
+    location /cryptoanalysis/ {
+                proxy_pass         http://143.198.x.y:8501/; #change with your ip
+                proxy_set_header   Host      $host;
+                proxy_set_header   X-Real-IP $remote_addr;
+                proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header   X-Forwarded-Proto $scheme;
+                proxy_buffering    off;
+                proxy_http_version 1.1;
+                # Also requires websocket:
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+                proxy_read_timeout 86400;
+        }
+        ```
+        now, you can access with https://yourdomain.com/cryptoanalysis
