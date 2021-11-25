@@ -33,7 +33,7 @@ class Crypto_analysis:
         url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
         parameters = {
         'start':'1',
-        'limit':'200', # 100 i think is the best depending on the time analysis (execution time is aroud: 53 seconds) each 50 takes around 17 second
+        'limit':'100', # 100 i think is the best depending on the time analysis (execution time is aroud: 53 seconds) each 50 takes around 17 second
         'convert':'USDT'#bridge coin (btcusdt) u can change it to BUSD or any bridge
         }
         headers = {
@@ -76,7 +76,6 @@ class Crypto_analysis:
     async def get_analysis_mma():
         start=datetime.now()
         with st.spinner("Make MMA analysis"):
-        
             for ticker in Crypto_analysis.filtered_coins:
                 try:
                     ticker_summery = TA_Handler(
@@ -145,11 +144,11 @@ class Crypto_analysis:
         st.header("BUY/SELL")
         col1, col2,col3,col4,col5 = st.columns(5)
         if Crypto_analysis.strong_buy or Crypto_analysis.strong_sell is not None:
-            col1.success("recommanded")
-            col2.success("Strong buy")
-            col3.success("Buy")
-            col4.error("Sell")
-            col5.error("Strong sell")
+            col1.success("recommanded (MMA/OSC)")
+            col2.success("Strong buy (MMA)")
+            col3.success("Buy (MMA)")
+            col4.error("Sell (MMA)")
+            col5.error("Strong sell (MMA)")
             col1.table(Crypto_analysis.recommanded_crypto)
             col2.table(Crypto_analysis.strong_buy)
             col3.table(Crypto_analysis.buy)
