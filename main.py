@@ -1,5 +1,3 @@
-from asyncio.streams import StreamWriter, start_server
-from logging import info
 import streamlit as st
 import asyncio
 from datetime import date, datetime
@@ -7,8 +5,6 @@ import json
 from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from requests import Session
 from tradingview_ta import *
-
-
 
 # setup the screen for streamlit to be wide
 st.set_page_config(layout="wide")
