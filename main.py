@@ -1,8 +1,7 @@
 import streamlit as st
 import asyncio
-from datetime import date, datetime
+from datetime import datetime
 import json
-from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from requests import Session
 from tradingview_ta import *
 
@@ -10,26 +9,24 @@ from tradingview_ta import *
 st.set_page_config(layout="wide")
 
 class Crypto_analysis:
+    
+    
+    
     interval=""
-    info_mma={}
-    analyse_mma={}
-    analyse_osc={}
-    recommanded_crypto=[]
     filtered_coins=[]
-    info_filtered_mma={}
     buy=[]
     sell=[]
     strong_buy=[]
     strong_sell=[]
-    all_tasks=[]
-    
+    recommanded_crypto=[]
 
+    #this method collect the 200 latest cryptocurrency 
+    #filtering them by taking only the positive changes in 1h, 24h, 7d, +Vol_24h
     async def get_marketCap():
-        start=datetime.now()
         url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
         parameters = {
         'start':'1',
-        'limit':'100', # 100 i think is the best depending on the time analysis (execution time is aroud: 53 seconds) each 50 takes around 17 second
+        'limit':'200', 
         'convert':'USDT'#bridge coin (btcusdt) u can change it to BUSD or any bridge
         }
         headers = {
@@ -41,12 +38,12 @@ class Crypto_analysis:
         session.headers.update(headers)
 
         try:
-            crypto_data=[]
             changes={}
             response = session.get(url, params=parameters)
             data = json.loads(response.text)
             
             with st.spinner("Collecting 100 latest Cyrpto and save the crypto with positive changes"):
+                
                 for d in data.keys():
                     if d=="data":
                         for i in data[d]:
@@ -55,23 +52,19 @@ class Crypto_analysis:
                             proc_24h= i["quote"]["USDT"]["percent_change_24h"]
                             proc_7d = i["quote"]["USDT"]["percent_change_7d"]
                             vol_ch24h=i["quote"]["USDT"]["volume_change_24h"]
-                            crypto_data.append(ticker)
                             changes[ticker] = [proc_1h, proc_24h, proc_7d, vol_ch24h]
-            st.write("Execution time: ",datetime.now()-start)
-            st.success("Done Collecting and sorting Crypto!")    
-            #filter the coins with the changes in 1 hour, one day, one week 
             
             Crypto_analysis.filtered_coins = [coin for coin in changes.keys() if changes[coin][0] and changes[coin][1] and changes[coin][2] and changes[coin][3]> 0] 
-            return Crypto_analysis.filtered_coins 
+            
+        except: 
+            pass 
+        st.success("Done collecting Cryptos")
         
-        except (ConnectionError, Timeout, TooManyRedirects) as e:
-            return e
-        
-
+    
     # add progress bar to th analysis
     async def get_analysis_mma():
-        start=datetime.now()
-        with st.spinner("Make MMA analysis"):
+        
+        with st.spinner("Making MMA analysis..."):
             for ticker in Crypto_analysis.filtered_coins:
                 try:
                     ticker_summery = TA_Handler(
@@ -81,20 +74,21 @@ class Crypto_analysis:
                         interval=Crypto_analysis.interval  # Interval.INTERVAL_1_DAY
                     )
                     
-                    Crypto_analysis.analyse_mma[ticker] =  ticker_summery.get_analysis().moving_averages
-                    #return Crypto_analysis.analyse_mma
+                    rec=ticker_summery.get_analysis().moving_averages["RECOMMENDATION"]
+                    if rec == "BUY": Crypto_analysis.buy.append(ticker)
+                    if rec == "SELL": Crypto_analysis.sell.append(ticker)
+                    if rec == "STRONG_BUY": Crypto_analysis.strong_buy.append(ticker)
+                    if rec == "STRONG_SELL": Crypto_analysis.strong_sell.append(ticker)
                 except:
                     pass
-        
-        st.write("Execution time",datetime.now()-start)
-        st.success('Done making the MMA. analysis!')
-        #Crypto_analysis.info_filtered_mma = {x: y for x, y in Crypto_analysis.analyse_mma.items() if (y is not None and y != 0)}
+        st.success("Done Money moves analysis") 
     
-    # add a progress bar for the analysis
     async def get_analysis_osc():
-        start=datetime.now()
+        recommanded_list=Crypto_analysis.strong_buy + Crypto_analysis.buy 
+
         with st.spinner('Making OSC. analysis...'):
-            for ticker in Crypto_analysis.analyse_mma.keys():
+            
+            for ticker in recommanded_list:
                 try:
                     ticker_summery = TA_Handler(
                         symbol=ticker+"USDT",
@@ -102,26 +96,17 @@ class Crypto_analysis:
                         exchange="binance",  # "NASDAQ"
                         interval=Crypto_analysis.interval  # Interval.INTERVAL_1_DAY
                     )
-                    
-                    rec = Crypto_analysis.analyse_mma[ticker]["RECOMMENDATION"]
-                    if rec == "BUY": Crypto_analysis.buy.append(ticker)
-                    if rec == "SELL": Crypto_analysis.sell.append(ticker)
-                    if rec == "STRONG_BUY": Crypto_analysis.strong_buy.append(ticker)
-                    if rec == "STRONG_SELL": Crypto_analysis.strong_sell.append(ticker)
-                    
                     osc = ticker_summery.get_analysis().oscillators
                     
                     if osc is not None and osc["RECOMMENDATION"]=="BUY": 
-                        Crypto_analysis.analyse_osc[ticker]=osc
                         Crypto_analysis.recommanded_crypto.append(ticker)
                     
-                    #return Crypto_analysis.recommanded_crypto
-                except: #(ConnectionError, Timeout, TooManyRedirects) as e:
+                except: 
                     pass
-        st.write("Execution time",datetime.now()-start)
-        st.success('Done making the OSC. analysis!')
-
+        st.success("Done OSC analysis")
+       
     async def draw_sidebar():
+
         st.sidebar.header("Crypto-Analysis")
         Crypto_analysis.interval = st.sidebar.radio("Choose interval",(
             "1 minute", 
@@ -132,8 +117,6 @@ class Crypto_analysis:
             "1 day",
             "1 week",
             "1 month"))
-        if Crypto_analysis.interval is not None: return Crypto_analysis.interval
-
 
     async def draw_body():
         
@@ -157,21 +140,18 @@ class Crypto_analysis:
             col3.table(Crypto_analysis.sell)
 
 async def main():
-    start = datetime.now()
     
-    
-    task0 =  asyncio.create_task(Crypto_analysis.draw_sidebar())
-    task1  = asyncio.create_task(Crypto_analysis.get_marketCap())
-    
-    group1 =  asyncio.create_task(Crypto_analysis.get_analysis_mma())
-    group2 =  asyncio.create_task(Crypto_analysis.get_analysis_osc())
-    #task2 = asyncio.create_task(Crypto_analysis.get_analysis_mma())
-    #task3 = asyncio.create_task(Crypto_analysis.get_analysis_osc())
-    task4 = asyncio.create_task(Crypto_analysis.draw_body())
+    asyncio.create_task(Crypto_analysis.draw_sidebar())
+    asyncio.create_task(Crypto_analysis.get_marketCap())
+    asyncio.create_task(Crypto_analysis.get_analysis_mma())
+    asyncio.create_task(Crypto_analysis.get_analysis_osc())
+    asyncio.create_task(Crypto_analysis.draw_body())
     
     
 if __name__ == '__main__':
+    start=datetime.now()
     asyncio.run(main())
+    st.write("Execution time",datetime.now()-start)
     
     
     

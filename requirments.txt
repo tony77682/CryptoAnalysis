@@ -3,5 +3,4 @@ pandas
 numpy
 matplotlib
 scikit-learn
-binance
 tradingview_ta
