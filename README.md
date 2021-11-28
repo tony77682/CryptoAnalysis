@@ -94,6 +94,5 @@ streamlit run main.py
         3- run the program
                 streamlit run main.py
 
-![image](<img width="1414" alt="image" src="https://user-images.githubusercontent.com/17545900/143775894-4c047f9d-54d3-4a4c-a743-8b0ff9ce3126.png">
-)
+![image](https://user-images.githubusercontent.com/17545900/143775894-4c047f9d-54d3-4a4c-a743-8b0ff9ce3126.png)
 
