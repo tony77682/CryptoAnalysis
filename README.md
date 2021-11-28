@@ -1,4 +1,4 @@
-# asyc_crypto_analysis
+# crypto_analysis
 Execution time for for 200 crypto currencies that they had a positive changes in the last 1h, 24h, 7days and volume change.
 then program make a moving money avg. analysis for the those cryptos and generate four lists(buy, sell, strong_buy and strong_sell)
 then we make and OSC. analysis on the crypto list of the MMA analysis to generate a new list called Recommanded to buy in this interval of time 
@@ -94,26 +94,6 @@ streamlit run main.py
         3- run the program
                 streamlit run main.py
 
-![image](https://user-images.githubusercontent.com/17545900/143223263-156bed3e-de66-41f7-9b0e-90d45b5e4ae3.png)
+![image](<img width="1414" alt="image" src="https://user-images.githubusercontent.com/17545900/143775894-4c047f9d-54d3-4a4c-a743-8b0ff9ce3126.png">
+)
 
-
-
-# setup for nginx virtual host
-## not done yet
-    edit nginx vhost, and add this code to pointed 'cryptoanalysis' url path to this app, example :
-    ```
-    location /cryptoanalysis/ {
-                proxy_pass         http://143.198.x.y:8501/; #change with your ip
-                proxy_set_header   Host      $host;
-                proxy_set_header   X-Real-IP $remote_addr;
-                proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header   X-Forwarded-Proto $scheme;
-                proxy_buffering    off;
-                proxy_http_version 1.1;
-                # Also requires websocket:
-                proxy_set_header Upgrade $http_upgrade;
-                proxy_set_header Connection "upgrade";
-                proxy_read_timeout 86400;
-        }
-        ```
-        now, you can access with https://yourdomain.com/cryptoanalysis
