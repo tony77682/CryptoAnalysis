@@ -180,9 +180,6 @@ class Crypto_analysis:
         for p in processes:
             p.join()
         
-        # Tell child processes to stop
-        for p in range(NUMBER_OF_PROCESSES):
-            task_queue.put('STOP')
 
 
 
@@ -204,10 +201,8 @@ def main():
 if __name__ == '__main__':
     
     start=datetime.now()
-    #freeze_support()
+    
+    freeze_support()
     main()
-    
+
     st.write("Execution time",datetime.now()-start)
-    
-    
-    
