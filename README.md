@@ -1,6 +1,6 @@
 # Crypto analysis
 
-Execution time for for 200 crypto currencies that they had a positive changes in the last 1h, 24h, 7days and volume change.
+Execution time for for 100 crypto currencies that they had a positive changes in the last 1h, 24h, 7days and volume change.
 then program make a moving money avg. analysis for the those cryptos and generate four lists(buy, sell, strong_buy and strong_sell)
 then we make and OSC. analysis on the crypto list of the MMA analysis to generate a new list called Recommanded to buy in this interval of time 
 Analysis takes around: 53 seconds) each 50 takes around 17 second
