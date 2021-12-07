@@ -1,6 +1,7 @@
 streamlit
 pandas
 numpy
+requests
 matplotlib
 scikit-learn
 tradingview_ta
