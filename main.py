@@ -1,16 +1,11 @@
 import streamlit as st
-import asyncio
 from datetime import datetime
 import json
 from requests import Session
 from tradingview_ta import *
-from multiprocessing import Process, Queue, current_process, freeze_support, set_start_method
-
-
-
+import concurrent.futures
 
 class Crypto_analysis:
-    
     
     all=[]
     interval=""
@@ -22,18 +17,18 @@ class Crypto_analysis:
     recommanded_list=[]
     
 
-    #this method collect the 200 latest cryptocurrency 
+    #this method collect the 100 latest cryptocurrency 
     #filtering them by taking only the positive changes in 1h, 24h, 7d, +Vol_24h
     def get_marketCap():
         url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
         parameters = {
         'start':'1',
-        'limit':'100', 
+        'limit':'200', # you can change this value to get bigger list, but it will effect raise the processing time around 2 min with each 100
         'convert':'USDT'#bridge coin (btcusdt) u can change it to BUSD or any bridge
         }
         headers = {
         'Accepts': 'application/json',
-            'X-CMC_PRO_API_KEY': 'API-key',
+            'X-CMC_PRO_API_KEY': 'API-KEY',
         }
 
         session = Session()
@@ -62,13 +57,8 @@ class Crypto_analysis:
         except: 
             pass 
         st.success("Done collecting Cryptos")
-        
     
-    ## Example{'RECOMMENDATION': 'BUY', 'BUY': 9, 'SELL': 5, 'NEUTRAL': 1, 'COMPUTE': {'EMA10': 'SELL', 'SMA10': 'SELL', 'EMA20': 'SELL', 'SMA20': 'SELL', 'EMA30': 'BUY', 'SMA30': 'BUY', 'EMA50': 'BUY', 'SMA50': 'BUY', 'EMA100': 'BUY', 'SMA100': 'BUY', 'EMA200': 'BUY', 'SMA200': 'BUY', 'Ichimoku': 'NEUTRAL', 'VWMA': 'SELL', 'HullMA': 'BUY'}}
-
     def get_analysis_mma(ticker):
-        
-      
         try:
             ticker_summery = TA_Handler(
                 symbol=ticker+"USDT",
@@ -95,17 +85,15 @@ class Crypto_analysis:
                 exchange="binance", 
                 interval=Crypto_analysis.interval 
             )
-            
-            Crypto_analysis.mma_coins[ticker] = ticker_summery.get_analysis().oscillators["RECOMMENDATION"]
-           
+            Crypto_analysis.mma_coins[ticker] = ticker_summery.get_analysis().oscillators["RECOMMENDATION"]          
             
         except: 
             pass
        
-    def draw_sidebar():
+    def do_draw_sidebar():
 
         # setup the screen for streamlit to be wide
-        st.set_page_config(layout="wide")
+        
         st.sidebar.header("Crypto-Analysis")
         Crypto_analysis.interval = st.sidebar.radio("Choose interval",(
             "1 minute", 
@@ -117,92 +105,33 @@ class Crypto_analysis:
             "1 week",
             "1 month"))
 
-    def draw_body():
+    def do_draw_body():
         
         st.header("BUY/SELL")
         col1, col2,col3,col4= st.columns(4)
-
-        if Crypto_analysis.strong_buy or Crypto_analysis.strong_sell is not None:
-           
-            #col1.success("Recommanded")
-            col1.success("Strong buy")
-            col2.success("Buy")
-            col3.error("Sell")
-            col4.error("Strong sell")
-            #col1.table(list(Crypto_analysis.recommanded_list))
-            col1.table(list(Crypto_analysis.strong_buy))
-            col2.table(list(Crypto_analysis.buy))
-            col3.table(list(Crypto_analysis.sell))
-            col4.table(list(Crypto_analysis.strong_sell))
-        else:
-            col2.success("Buy")
-            col3.error("Sell")
-            col2.table(Crypto_analysis.buy)
-            col3.table(Crypto_analysis.sell)
-
-    #
-    # Function run by worker processes
-    #
-
-    def worker(input, output):
-        for func, args in iter(input.get, 'STOP'):
-            result =Crypto_analysis.calculate(func, args)
-            output.put(result)
-
-    #
-    # Function used to calculate result
-    #
-
-    def calculate(func, args):
-        result = func(*args)
-        return '%s says that %s%s = %s' % \
-            (current_process().name, func.__name__, args, result)
-
-    def loop_tasks(task):
-        NUMBER_OF_PROCESSES = 4
-        processes: list[Process] = []
-
-        # Create queues
-        task_queue = Queue()
-        done_queue = Queue()
+   
+        col1.success("Strong buy")
+        col2.success("Buy")
+        col3.error("Sell")
+        col4.error("Strong sell")
+        
+        col1.table(list(Crypto_analysis.strong_buy))
+        col2.table(list(Crypto_analysis.buy))
+        col3.table(list(Crypto_analysis.sell))
+        col4.table(list(Crypto_analysis.strong_sell))
     
-        # Submit tasks
-        for task in task:
-            task_queue.put(task)
-        
-        #start the processes
-        for i in range(NUMBER_OF_PROCESSES):
-            p=Process(target=Crypto_analysis.worker, args=(task_queue, done_queue))
-            p.start()
-            processes.append(p)
-        
-        # Join the processes
-        for p in processes:
-            p.join()
-        
-
-
+    def do_analysis():
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            futures = [executor.submit(Crypto_analysis.get_analysis_osc(ticker),) for ticker in Crypto_analysis.all]
+            futures = [executor.submit(Crypto_analysis.get_analysis_mma(ticker),) for ticker in Crypto_analysis.mma_coins.keys()]
 
 def main():
-    
-       
-    Crypto_analysis.draw_sidebar()
+    Crypto_analysis.do_draw_sidebar()
     Crypto_analysis.get_marketCap()
-
-    loop_workersOSC = [(Crypto_analysis.get_analysis_osc(ticker)) for ticker in Crypto_analysis.all]
-    loop_workersMMA = [(Crypto_analysis.get_analysis_mma(ticker)) for ticker in Crypto_analysis.mma_coins.keys()]
-
-    Crypto_analysis.loop_tasks(loop_workersOSC)
-    Crypto_analysis.loop_tasks(loop_workersMMA)
-
-    Crypto_analysis.draw_body()
-   
-    
+    Crypto_analysis.do_analysis()    
+    Crypto_analysis.do_draw_body()
+        
 if __name__ == '__main__':
-    
     start=datetime.now()
-    
-    freeze_support()
     main()
-
     st.write("Execution time",datetime.now()-start)
