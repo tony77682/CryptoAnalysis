@@ -9,7 +9,7 @@ class Crypto_analysis:
     
     all=[]
     interval=""
-    mma_coins={}
+    osc_coins={}
     buy=[]
     sell=[]
     strong_buy=[]
@@ -23,7 +23,7 @@ class Crypto_analysis:
         url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
         parameters = {
         'start':'1',
-        'limit':'200', # you can change this value to get bigger list, but it will effect raise the processing time around 2 min with each 100
+        'limit':'100', # you can change this value to get bigger list, but it will effect raise the processing time around 2 min with each 100
         'convert':'USDT'#bridge coin (btcusdt) u can change it to BUSD or any bridge
         }
         headers = {
@@ -85,7 +85,7 @@ class Crypto_analysis:
                 exchange="binance", 
                 interval=Crypto_analysis.interval 
             )
-            Crypto_analysis.mma_coins[ticker] = ticker_summery.get_analysis().oscillators["RECOMMENDATION"]          
+            Crypto_analysis.osc_coins[ticker] = ticker_summery.get_analysis().oscillators["RECOMMENDATION"]          
             
         except: 
             pass
@@ -103,7 +103,7 @@ class Crypto_analysis:
             "4 hours",
             "1 day",
             "1 week",
-            "1 month"))
+            "1 month"),2)
 
     def do_draw_body():
         
@@ -122,9 +122,12 @@ class Crypto_analysis:
     
     def do_analysis():
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            futures = [executor.submit(Crypto_analysis.get_analysis_osc(ticker),) for ticker in Crypto_analysis.all]
-            futures = [executor.submit(Crypto_analysis.get_analysis_mma(ticker),) for ticker in Crypto_analysis.mma_coins.keys()]
-
+            with st.spinner('Doing OSC analysis on All crypto...'):
+                futures = [executor.submit(Crypto_analysis.get_analysis_osc(ticker),) for ticker in Crypto_analysis.all]
+            st.success("Done OSC")
+            with st.spinner('Doing MM analysis on OSCs crypto...'):
+                futures = [executor.submit(Crypto_analysis.get_analysis_mma(ticker),) for ticker in Crypto_analysis.osc_coins.keys()]
+            st.success("Done MMA")
 def main():
     Crypto_analysis.do_draw_sidebar()
     Crypto_analysis.get_marketCap()
